@@ -1,6 +1,8 @@
+import { useCompass } from "@/hooks/useCompass";
 import { getVisibleCelestialObjects } from "@/services/astronomy";
 import { getCurrentLocation } from "@/services/location";
 import { useEffect, useState } from "react";
+
 import {
     ActivityIndicator,
     ScrollView,
@@ -10,6 +12,7 @@ import {
 } from "react-native";
 
 export default function SkyScreen() {
+  const { heading } = useCompass();
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState<{
     latitude: number;
@@ -72,6 +75,9 @@ export default function SkyScreen() {
           Longitude: {location?.longitude.toFixed(5)}
         </Text>
         <Text style={styles.smallText}>{new Date().toLocaleString()}</Text>
+        <Text style={styles.smallText}>
+          Heading: {heading !== null ? `${heading}°` : "Calibrating..."}
+        </Text>
       </View>
 
       {celestialObjects.map((object) => (
