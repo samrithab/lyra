@@ -1,6 +1,6 @@
 import { CelestialObject } from "@/types/astronomy";
-import { Canvas, Circle, Group, Line, Text, useFont } from "@shopify/react-native-skia";
-import { View } from "react-native";
+import { Canvas, Circle, Line } from "@shopify/react-native-skia";
+import { StyleSheet, Text, View } from "react-native";
 
 interface SkyCanvasProps {
   objects: CelestialObject[];
@@ -8,13 +8,26 @@ interface SkyCanvasProps {
   pitch: number | null;
 }
 
-export function SkyCanvas({ objects, heading, pitch }: SkyCanvasProps) {
+const stars = [
+  { x: 60, y: 55 }, { x: 110, y: 90 }, { x: 250, y: 70 },
+  { x: 290, y: 130 }, { x: 80, y: 210 }, { x: 220, y: 230 },
+  { x: 155, y: 45 }, { x: 300, y: 250 }, { x: 45, y: 280 },
+  { x: 180, y: 160 },
+];
+
+const constellationLines = [
+  [{ x: 95, y: 120 }, { x: 130, y: 155 }],
+  [{ x: 130, y: 155 }, { x: 165, y: 120 }],
+  [{ x: 130, y: 155 }, { x: 125, y: 210 }],
+  [{ x: 125, y: 210 }, { x: 95, y: 250 }],
+  [{ x: 125, y: 210 }, { x: 165, y: 250 }],
+];
+
+export function SkyCanvas({ objects, heading }: SkyCanvasProps) {
   const width = 340;
   const height = 340;
   const centerX = width / 2;
   const centerY = height / 2;
-
-  const font = useFont(undefined, 13);
 
   function projectObject(object: CelestialObject) {
     const currentHeading = heading ?? 0;
@@ -25,57 +38,151 @@ export function SkyCanvas({ objects, heading, pitch }: SkyCanvasProps) {
     if (relativeAzimuth < -180) relativeAzimuth += 360;
 
     const x = centerX + relativeAzimuth * 2.2;
-
     const y = centerY - object.altitude * 2.2;
 
     return { x, y };
   }
 
-  const visibleObjects = objects.filter((object) => object.isVisible);
+  const visibleObjects = objects
+    .filter((object) => object.isVisible)
+    .map((object) => ({
+      ...object,
+      position: projectObject(object),
+    }))
+    .filter(
+      (object) =>
+        object.position.x > 24 &&
+        object.position.x < width - 24 &&
+        object.position.y > 24 &&
+        object.position.y < height - 24
+    );
 
   return (
-    <View>
-      <Canvas style={{ width, height }}>
-        <Circle cx={centerX} cy={centerY} r={165} color="#0f172a" />
+    <View style={styles.wrapper}>
+      <Text style={styles.heading}>
+        {heading !== null ? `${heading}°` : "Calibrating..."}
+      </Text>
 
-        <Circle cx={centerX} cy={centerY} r={2} color="white" />
+      <View style={styles.sky}>
+        <Canvas style={{ width, height }}>
+          <Circle cx={centerX} cy={centerY} r={165} color="#020617" />
+          <Circle cx={centerX} cy={centerY} r={164} color="#0f172a" />
 
-        <Line
-          p1={{ x: 20, y: centerY }}
-          p2={{ x: width - 20, y: centerY }}
-          color="#334155"
-          strokeWidth={1}
-        />
+          {stars.map((star, index) => (
+            <Circle
+              key={`star-${index}`}
+              cx={star.x}
+              cy={star.y}
+              r={1.5}
+              color="#e0f2fe"
+            />
+          ))}
 
-        {visibleObjects.map((object) => {
-          const { x, y } = projectObject(object);
+          {constellationLines.map((line, index) => (
+            <Line
+              key={`line-${index}`}
+              p1={line[0]}
+              p2={line[1]}
+              color="#475569"
+              strokeWidth={1}
+            />
+          ))}
 
-          if (x < 20 || x > width - 20 || y < 20 || y > height - 20) {
-            return null;
-          }
+          <Line
+            p1={{ x: 28, y: centerY }}
+            p2={{ x: width - 28, y: centerY }}
+            color="#334155"
+            strokeWidth={1}
+          />
 
-          return (
-            <Group key={object.name}>
-                <Circle
-                cx={x}
-                cy={y}
-                r={object.type === "planet" ? 5 : 7}
-                color={object.type === "moon" ? "#e5e7eb" : "#facc15"}
-                />
+          <Circle cx={centerX} cy={centerY} r={4} color="#ffffff" />
 
-                {font && (
-                <Text
-                    x={x + 8}
-                    y={y - 8}
-                    text={object.name}
-                    font={font}
-                    color="white"
-                />
-                )}
-            </Group>
-            );
-        })}
-      </Canvas>
+          {visibleObjects.map((object) => (
+            <Circle
+              key={object.name}
+              cx={object.position.x}
+              cy={object.position.y}
+              r={object.type === "moon" ? 8 : 5}
+              color={object.type === "moon" ? "#e5e7eb" : "#facc15"}
+            />
+          ))}
+        </Canvas>
+
+        <Text style={[styles.compass, styles.north]}>N</Text>
+        <Text style={[styles.compass, styles.south]}>S</Text>
+        <Text style={[styles.compass, styles.east]}>E</Text>
+        <Text style={[styles.compass, styles.west]}>W</Text>
+
+        {visibleObjects.map((object) => (
+          <Text
+            key={`${object.name}-label`}
+            style={[
+              styles.label,
+              {
+                left: object.position.x + 8,
+                top: object.position.y - 14,
+              },
+            ]}
+          >
+            {object.name}
+          </Text>
+        ))}
+      </View>
+
+      <Text style={styles.caption}>
+        Rotate your phone to scan the visible sky.
+      </Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrapper: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  heading: {
+    color: "#e0f2fe",
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+  sky: {
+    width: 340,
+    height: 340,
+    position: "relative",
+  },
+  compass: {
+    position: "absolute",
+    color: "#94a3b8",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  north: {
+    top: 10,
+    left: 165,
+  },
+  south: {
+    bottom: 10,
+    left: 165,
+  },
+  east: {
+    right: 12,
+    top: 160,
+  },
+  west: {
+    left: 12,
+    top: 160,
+  },
+  label: {
+    position: "absolute",
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  caption: {
+    color: "#94a3b8",
+    fontSize: 13,
+    marginTop: 12,
+  },
+});
