@@ -1,4 +1,5 @@
 import { useCompass } from "@/hooks/useCompass";
+import { useDeviceOrientation } from "@/hooks/useDeviceOrientation";
 import { getVisibleCelestialObjects } from "@/services/astronomy";
 import { getCurrentLocation } from "@/services/location";
 import { useEffect, useState } from "react";
@@ -13,6 +14,7 @@ import {
 
 export default function SkyScreen() {
   const { heading } = useCompass();
+  const { pitch, roll } = useDeviceOrientation();
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState<{
     latitude: number;
@@ -77,6 +79,13 @@ export default function SkyScreen() {
         <Text style={styles.smallText}>{new Date().toLocaleString()}</Text>
         <Text style={styles.smallText}>
           Heading: {heading !== null ? `${heading}°` : "Calibrating..."}
+        </Text>
+        <Text style={styles.smallText}>
+            Pitch: {pitch !== null ? `${pitch}°` : "Calibrating..."}
+            </Text>
+
+            <Text style={styles.smallText}>
+            Roll: {roll !== null ? `${roll}°` : "Calibrating..."}
         </Text>
       </View>
 

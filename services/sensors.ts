@@ -1,4 +1,4 @@
-import { Magnetometer } from "expo-sensors";
+import { DeviceMotion, Magnetometer } from "expo-sensors";
 
 export function calculateHeading(data: {
   x: number;
@@ -14,4 +14,8 @@ export function calculateHeading(data: {
   return Math.round(angle);
 }
 
-export { Magnetometer };
+export function radiansToDegrees(radians: number): number {
+  return radians * (180 / Math.PI);
+}
+
+export { DeviceMotion, Magnetometer };
