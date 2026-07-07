@@ -1,3 +1,4 @@
+import { SkyCanvas } from "@/components/SkyCanvas";
 import { useCompass } from "@/hooks/useCompass";
 import { useDeviceOrientation } from "@/hooks/useDeviceOrientation";
 import { getVisibleCelestialObjects } from "@/services/astronomy";
@@ -68,6 +69,12 @@ export default function SkyScreen() {
       <Text style={styles.subtitle}>
         Based on your current location and time.
       </Text>
+
+        <SkyCanvas
+            objects={celestialObjects}
+            heading={heading}
+            pitch={pitch}
+        />
 
       <View style={styles.locationCard}>
         <Text style={styles.smallText}>
