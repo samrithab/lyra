@@ -9,21 +9,42 @@ interface SkyCanvasProps {
 }
 
 const stars = [
-  { x: 60, y: 55 }, { x: 110, y: 90 }, { x: 250, y: 70 },
-  { x: 290, y: 130 }, { x: 80, y: 210 }, { x: 220, y: 230 },
-  { x: 155, y: 45 }, { x: 300, y: 250 }, { x: 45, y: 280 },
+  { x: 60, y: 55 },
+  { x: 110, y: 90 },
+  { x: 250, y: 70 },
+  { x: 290, y: 130 },
+  { x: 80, y: 210 },
+  { x: 220, y: 230 },
+  { x: 155, y: 45 },
+  { x: 300, y: 250 },
+  { x: 45, y: 280 },
   { x: 180, y: 160 },
 ];
 
 const constellationLines = [
-  [{ x: 95, y: 120 }, { x: 130, y: 155 }],
-  [{ x: 130, y: 155 }, { x: 165, y: 120 }],
-  [{ x: 130, y: 155 }, { x: 125, y: 210 }],
-  [{ x: 125, y: 210 }, { x: 95, y: 250 }],
-  [{ x: 125, y: 210 }, { x: 165, y: 250 }],
+  [
+    { x: 95, y: 120 },
+    { x: 130, y: 155 },
+  ],
+  [
+    { x: 130, y: 155 },
+    { x: 165, y: 120 },
+  ],
+  [
+    { x: 130, y: 155 },
+    { x: 125, y: 210 },
+  ],
+  [
+    { x: 125, y: 210 },
+    { x: 95, y: 250 },
+  ],
+  [
+    { x: 125, y: 210 },
+    { x: 165, y: 250 },
+  ],
 ];
 
-export function SkyCanvas({ objects, heading }: SkyCanvasProps) {
+export function SkyCanvas({ objects, heading, pitch }: SkyCanvasProps) {
   const width = 340;
   const height = 340;
   const centerX = width / 2;
@@ -31,14 +52,17 @@ export function SkyCanvas({ objects, heading }: SkyCanvasProps) {
 
   function projectObject(object: CelestialObject) {
     const currentHeading = heading ?? 0;
+    const currentPitch = pitch ?? 0;
 
     let relativeAzimuth = object.azimuth - currentHeading;
 
     if (relativeAzimuth > 180) relativeAzimuth -= 360;
     if (relativeAzimuth < -180) relativeAzimuth += 360;
 
-    const x = centerX + relativeAzimuth * 2.2;
-    const y = centerY - object.altitude * 2.2;
+    const relativeAltitude = object.altitude - currentPitch;
+
+    const x = centerX + relativeAzimuth * 4;
+    const y = centerY - relativeAltitude * 4;
 
     return { x, y };
   }
@@ -60,7 +84,11 @@ export function SkyCanvas({ objects, heading }: SkyCanvasProps) {
   return (
     <View style={styles.wrapper}>
       <Text style={styles.heading}>
-        {heading !== null ? `${heading}°` : "Calibrating..."}
+        Heading: {heading !== null ? `${heading}°` : "Calibrating..."}
+      </Text>
+
+      <Text style={styles.pitch}>
+        Pitch: {pitch !== null ? `${pitch}°` : "Calibrating..."}
       </Text>
 
       <View style={styles.sky}>
@@ -102,8 +130,14 @@ export function SkyCanvas({ objects, heading }: SkyCanvasProps) {
               key={object.name}
               cx={object.position.x}
               cy={object.position.y}
-              r={object.type === "moon" ? 8 : 5}
-              color={object.type === "moon" ? "#e5e7eb" : "#facc15"}
+              r={object.type === "moon" ? 8 : object.type === "sun" ? 9 : 5}
+              color={
+                object.type === "moon"
+                  ? "#e5e7eb"
+                  : object.type === "sun"
+                    ? "#f97316"
+                    : "#facc15"
+              }
             />
           ))}
         </Canvas>
@@ -130,7 +164,7 @@ export function SkyCanvas({ objects, heading }: SkyCanvasProps) {
       </View>
 
       <Text style={styles.caption}>
-        Rotate your phone to scan the visible sky.
+        Rotate and tilt your phone to scan the visible sky.
       </Text>
     </View>
   );
@@ -145,6 +179,11 @@ const styles = StyleSheet.create({
     color: "#e0f2fe",
     fontSize: 18,
     fontWeight: "700",
+    marginBottom: 4,
+  },
+  pitch: {
+    color: "#94a3b8",
+    fontSize: 14,
     marginBottom: 12,
   },
   sky: {
