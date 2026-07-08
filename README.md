@@ -23,10 +23,7 @@ The app combines live GPS data, device sensors, and astronomical calculations to
 
 ## Screenshots
 
-| Sky View | Compass | AR Prototype |
-|----------|----------|--------------|
-| *(Add Screenshot)* | *(Add Screenshot)* | *(Add Screenshot)* |
-
+*ADD SCREENSHOT*
 ---
 
 # Tech Stack
