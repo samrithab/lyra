@@ -5,13 +5,15 @@ export function calculateHeading(data: {
   y: number;
   z: number;
 }): number {
-  let angle = Math.atan2(data.y, data.x) * (180 / Math.PI);
+  let heading = Math.atan2(data.x, data.y) * (180 / Math.PI);
 
-  if (angle < 0) {
-    angle += 360;
+  if (heading < 0) {
+    heading += 360;
   }
 
-  return Math.round(angle);
+  heading = (heading + 180) % 360;
+
+  return Math.round(heading);
 }
 
 export function radiansToDegrees(radians: number): number {

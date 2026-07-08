@@ -28,6 +28,21 @@ export default function RootLayout() {
         />
 
         <Stack.Screen
+          name="ar"
+          options={{
+            title: "AR View",
+            headerShown: false,
+          }}
+        />
+
+        <Stack.Screen
+  name="compass"
+  options={{
+    title: "Compass Test",
+  }}
+/>
+
+        <Stack.Screen
           name="sky"
           options={{
             title: "Lyra",

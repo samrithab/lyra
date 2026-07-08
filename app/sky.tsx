@@ -3,10 +3,11 @@ import { useCompass } from "@/hooks/useCompass";
 import { useDeviceOrientation } from "@/hooks/useDeviceOrientation";
 import { getVisibleCelestialObjects } from "@/services/astronomy";
 import { getCurrentLocation } from "@/services/location";
+import { Link } from "expo-router";
 import { useEffect, useState } from "react";
-
 import {
     ActivityIndicator,
+    Pressable,
     ScrollView,
     StyleSheet,
     Text,
@@ -16,6 +17,7 @@ import {
 export default function SkyScreen() {
   const { heading } = useCompass();
   const { pitch, roll } = useDeviceOrientation();
+
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState<{
     latitude: number;
@@ -70,11 +72,13 @@ export default function SkyScreen() {
         Based on your current location and time.
       </Text>
 
-        <SkyCanvas
-            objects={celestialObjects}
-            heading={heading}
-            pitch={pitch}
-        />
+      <Link href="/compass" asChild>
+        <Pressable style={styles.arButton}>
+          <Text style={styles.arButtonText}>Open Compass Test</Text>
+        </Pressable>
+      </Link>
+
+      <SkyCanvas objects={celestialObjects} heading={heading} pitch={pitch} />
 
       <View style={styles.locationCard}>
         <Text style={styles.smallText}>
@@ -88,33 +92,65 @@ export default function SkyScreen() {
           Heading: {heading !== null ? `${heading}°` : "Calibrating..."}
         </Text>
         <Text style={styles.smallText}>
-            Pitch: {pitch !== null ? `${pitch}°` : "Calibrating..."}
-            </Text>
-
-            <Text style={styles.smallText}>
-            Roll: {roll !== null ? `${roll}°` : "Calibrating..."}
+          Pitch: {pitch !== null ? `${pitch}°` : "Calibrating..."}
+        </Text>
+        <Text style={styles.smallText}>
+          Roll: {roll !== null ? `${roll}°` : "Calibrating..."}
         </Text>
       </View>
 
+      <Text style={styles.sectionTitle}>Celestial Positions</Text>
+
       {celestialObjects.map((object) => (
-        <View key={object.name} style={styles.card}>
-          <Text style={styles.objectName}>{object.name}</Text>
+        <View key={`${object.name}-position`} style={styles.positionCard}>
+          <View style={styles.positionHeader}>
+            {/* <Text style={styles.planetIcon}>
+              {object.type === "sun" ? "☀️" : object.type === "moon" ? "🌙" : "🪐"}
+            </Text> */}
 
-          <Text style={styles.text}>
-            Altitude: {object.altitude.toFixed(1)}°
-          </Text>
+            <View>
+              <Text style={styles.objectName}>{object.name}</Text>
+              <Text
+                style={object.isVisible ? styles.visibleBadge : styles.hiddenBadge}
+              >
+                {object.isVisible ? "Visible now" : "Below horizon"}
+              </Text>
+            </View>
+          </View>
 
-          <Text style={styles.text}>
-            Azimuth: {object.azimuth.toFixed(1)}°
-          </Text>
+          <View style={styles.positionGrid}>
+            <View style={styles.metricRow}>
+              <Text style={styles.metric}>Azimuth</Text>
+              <Text style={styles.metricValue}>{object.azimuth.toFixed(1)}°</Text>
+            </View>
 
-          <Text style={object.isVisible ? styles.visible : styles.hidden}>
-            {object.isVisible ? "Visible" : "Below horizon"}
-          </Text>
+            <View style={styles.metricRow}>
+              <Text style={styles.metric}>Altitude</Text>
+              <Text style={styles.metricValue}>{object.altitude.toFixed(1)}°</Text>
+            </View>
+
+            {heading !== null && (
+              <View style={styles.metricRow}>
+                <Text style={styles.metric}>From Facing</Text>
+                <Text style={styles.metricValue}>
+                  {normalizeAngle(object.azimuth - heading).toFixed(1)}°
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
       ))}
     </ScrollView>
   );
+}
+
+function normalizeAngle(angle: number) {
+  let value = angle;
+
+  while (value > 180) value -= 360;
+  while (value < -180) value += 360;
+
+  return value;
 }
 
 const styles = StyleSheet.create({
@@ -144,16 +180,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 20,
   },
+  arButton: {
+    backgroundColor: "#2563eb",
+    borderRadius: 999,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    alignSelf: "flex-start",
+    marginBottom: 20,
+  },
+  arButtonText: {
+    color: "white",
+    fontWeight: "700",
+  },
   locationCard: {
     backgroundColor: "#0f172a",
     borderColor: "#334155",
     borderWidth: 1,
     borderRadius: 18,
     padding: 16,
-    marginBottom: 20,
+    marginBottom: 24,
   },
-  card: {
-    width: "100%",
+  sectionTitle: {
+    color: "white",
+    fontSize: 24,
+    fontWeight: "800",
+    marginBottom: 14,
+  },
+  positionCard: {
     backgroundColor: "#0f172a",
     borderColor: "#334155",
     borderWidth: 1,
@@ -161,11 +214,51 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
   },
+  positionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 14,
+  },
+  planetIcon: {
+    fontSize: 28,
+  },
   objectName: {
     color: "white",
     fontSize: 20,
+    fontWeight: "800",
+  },
+  visibleBadge: {
+    color: "#86efac",
+    fontSize: 13,
     fontWeight: "700",
-    marginBottom: 8,
+    marginTop: 2,
+  },
+  hiddenBadge: {
+    color: "#94a3b8",
+    fontSize: 13,
+    fontWeight: "700",
+    marginTop: 2,
+  },
+  positionGrid: {
+    gap: 8,
+  },
+  metricRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    borderTopColor: "#1e293b",
+    borderTopWidth: 1,
+    paddingTop: 8,
+  },
+  metric: {
+    color: "#94a3b8",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  metricValue: {
+    color: "white",
+    fontSize: 15,
+    fontWeight: "800",
   },
   text: {
     color: "white",
@@ -176,18 +269,6 @@ const styles = StyleSheet.create({
     color: "#cbd5e1",
     fontSize: 14,
     marginVertical: 2,
-  },
-  visible: {
-    color: "#86efac",
-    fontSize: 15,
-    marginTop: 8,
-    fontWeight: "700",
-  },
-  hidden: {
-    color: "#94a3b8",
-    fontSize: 15,
-    marginTop: 8,
-    fontWeight: "700",
   },
   error: {
     color: "#f87171",

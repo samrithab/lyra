@@ -1,5 +1,4 @@
 import { CelestialObject } from "@/types/astronomy";
-import { Canvas, Circle, Line } from "@shopify/react-native-skia";
 import { StyleSheet, Text, View } from "react-native";
 
 interface SkyCanvasProps {
@@ -8,63 +7,53 @@ interface SkyCanvasProps {
   pitch: number | null;
 }
 
-const stars = [
-  { x: 60, y: 55 },
-  { x: 110, y: 90 },
-  { x: 250, y: 70 },
-  { x: 290, y: 130 },
-  { x: 80, y: 210 },
-  { x: 220, y: 230 },
-  { x: 155, y: 45 },
-  { x: 300, y: 250 },
-  { x: 45, y: 280 },
-  { x: 180, y: 160 },
-];
+const WINDOW_WIDTH = 340;
+const WINDOW_HEIGHT = 280;
+const HORIZON_Y = 210;
+const HORIZONTAL_FOV = 70;
 
-const constellationLines = [
-  [
-    { x: 95, y: 120 },
-    { x: 130, y: 155 },
-  ],
-  [
-    { x: 130, y: 155 },
-    { x: 165, y: 120 },
-  ],
-  [
-    { x: 130, y: 155 },
-    { x: 125, y: 210 },
-  ],
-  [
-    { x: 125, y: 210 },
-    { x: 95, y: 250 },
-  ],
-  [
-    { x: 125, y: 210 },
-    { x: 165, y: 250 },
-  ],
-];
+export function SkyCanvas({ objects, heading }: SkyCanvasProps) {
+  function normalizeAngle(angle: number) {
+    let value = angle;
 
-export function SkyCanvas({ objects, heading, pitch }: SkyCanvasProps) {
-  const width = 340;
-  const height = 340;
-  const centerX = width / 2;
-  const centerY = height / 2;
+    while (value > 180) value -= 360;
+    while (value < -180) value += 360;
+
+    return value;
+  }
+
+  function getDirectionLabel(degrees: number | null) {
+    if (degrees === null) return "Calibrating...";
+
+    if (degrees >= 337.5 || degrees < 22.5) return "North";
+    if (degrees >= 22.5 && degrees < 67.5) return "Northeast";
+    if (degrees >= 67.5 && degrees < 112.5) return "East";
+    if (degrees >= 112.5 && degrees < 157.5) return "Southeast";
+    if (degrees >= 157.5 && degrees < 202.5) return "South";
+    if (degrees >= 202.5 && degrees < 247.5) return "Southwest";
+    if (degrees >= 247.5 && degrees < 292.5) return "West";
+    return "Northwest";
+  }
 
   function projectObject(object: CelestialObject) {
-    const currentHeading = heading ?? 0;
-    const currentPitch = pitch ?? 0;
+    if (heading === null) return null;
 
-    let relativeAzimuth = object.azimuth - currentHeading;
+    const relativeAzimuth = normalizeAngle(object.azimuth - heading);
 
-    if (relativeAzimuth > 180) relativeAzimuth -= 360;
-    if (relativeAzimuth < -180) relativeAzimuth += 360;
+    if (Math.abs(relativeAzimuth) > HORIZONTAL_FOV / 2) {
+      return null;
+    }
 
-    const relativeAltitude = object.altitude - currentPitch;
+    const x =
+      WINDOW_WIDTH / 2 +
+      (relativeAzimuth / (HORIZONTAL_FOV / 2)) * (WINDOW_WIDTH / 2 - 28);
 
-    const x = centerX + relativeAzimuth * 4;
-    const y = centerY - relativeAltitude * 4;
+    // altitude 0° = horizon, 90° = top
+    const clampedAltitude = Math.max(0, Math.min(90, object.altitude));
 
-    return { x, y };
+    const y = HORIZON_Y - (clampedAltitude / 90) * (HORIZON_Y - 24);
+
+    return { x, y, relativeAzimuth };
   }
 
   const visibleObjects = objects
@@ -73,98 +62,44 @@ export function SkyCanvas({ objects, heading, pitch }: SkyCanvasProps) {
       ...object,
       position: projectObject(object),
     }))
-    .filter(
-      (object) =>
-        object.position.x > 24 &&
-        object.position.x < width - 24 &&
-        object.position.y > 24 &&
-        object.position.y < height - 24
-    );
+    .filter((object) => object.position !== null);
 
   return (
     <View style={styles.wrapper}>
       <Text style={styles.heading}>
-        Heading: {heading !== null ? `${heading}°` : "Calibrating..."}
+        Facing {getDirectionLabel(heading)}{" "}
+        {heading !== null ? `(${heading}°)` : ""}
       </Text>
 
-      <Text style={styles.pitch}>
-        Pitch: {pitch !== null ? `${pitch}°` : "Calibrating..."}
-      </Text>
-
-      <View style={styles.sky}>
-        <Canvas style={{ width, height }}>
-          <Circle cx={centerX} cy={centerY} r={165} color="#020617" />
-          <Circle cx={centerX} cy={centerY} r={164} color="#0f172a" />
-
-          {stars.map((star, index) => (
-            <Circle
-              key={`star-${index}`}
-              cx={star.x}
-              cy={star.y}
-              r={1.5}
-              color="#e0f2fe"
-            />
-          ))}
-
-          {constellationLines.map((line, index) => (
-            <Line
-              key={`line-${index}`}
-              p1={line[0]}
-              p2={line[1]}
-              color="#475569"
-              strokeWidth={1}
-            />
-          ))}
-
-          <Line
-            p1={{ x: 28, y: centerY }}
-            p2={{ x: width - 28, y: centerY }}
-            color="#334155"
-            strokeWidth={1}
-          />
-
-          <Circle cx={centerX} cy={centerY} r={4} color="#ffffff" />
-
-          {visibleObjects.map((object) => (
-            <Circle
-              key={object.name}
-              cx={object.position.x}
-              cy={object.position.y}
-              r={object.type === "moon" ? 8 : object.type === "sun" ? 9 : 5}
-              color={
-                object.type === "moon"
-                  ? "#e5e7eb"
-                  : object.type === "sun"
-                    ? "#f97316"
-                    : "#facc15"
-              }
-            />
-          ))}
-        </Canvas>
-
-        <Text style={[styles.compass, styles.north]}>N</Text>
-        <Text style={[styles.compass, styles.south]}>S</Text>
-        <Text style={[styles.compass, styles.east]}>E</Text>
-        <Text style={[styles.compass, styles.west]}>W</Text>
+      <View style={styles.window}>
+        <Text style={styles.skyLabel}>Sky</Text>
 
         {visibleObjects.map((object) => (
-          <Text
-            key={`${object.name}-label`}
+          <View
+            key={object.name}
             style={[
-              styles.label,
+              styles.object,
               {
-                left: object.position.x + 8,
-                top: object.position.y - 14,
+                left: object.position!.x,
+                top: object.position!.y,
               },
             ]}
           >
-            {object.name}
-          </Text>
+            <Text style={styles.objectSymbol}>
+              {object.type === "sun" ? "☀" : object.type === "moon" ? "☾" : "●"}
+            </Text>
+            <Text style={styles.objectName}>{object.name}</Text>
+          </View>
         ))}
+
+        <View style={styles.horizonLine} />
+        <Text style={styles.horizonText}>Horizon</Text>
+
+        <View style={styles.ground} />
       </View>
 
       <Text style={styles.caption}>
-        Rotate and tilt your phone to scan the visible sky.
+        Objects appear only when they are within your current facing direction.
       </Text>
     </View>
   );
@@ -179,49 +114,77 @@ const styles = StyleSheet.create({
     color: "#e0f2fe",
     fontSize: 18,
     fontWeight: "700",
-    marginBottom: 4,
-  },
-  pitch: {
-    color: "#94a3b8",
-    fontSize: 14,
     marginBottom: 12,
   },
-  sky: {
-    width: 340,
-    height: 340,
+  window: {
+    width: WINDOW_WIDTH,
+    height: WINDOW_HEIGHT,
+    borderRadius: 24,
+    overflow: "hidden",
+    backgroundColor: "#020617",
+    borderWidth: 1,
+    borderColor: "#334155",
     position: "relative",
   },
-  compass: {
+  skyLabel: {
     position: "absolute",
-    color: "#94a3b8",
-    fontSize: 13,
+    top: 14,
+    alignSelf: "center",
+    color: "#64748b",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  object: {
+    position: "absolute",
+    alignItems: "center",
+    transform: [{ translateX: -18 }, { translateY: -18 }],
+  },
+  objectSymbol: {
+    color: "#facc15",
+    fontSize: 18,
+    fontWeight: "800",
+    textShadowColor: "rgba(0,0,0,0.8)",
+    textShadowRadius: 6,
+  },
+  objectName: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 2,
+    textShadowColor: "rgba(0,0,0,0.8)",
+    textShadowRadius: 6,
+  },
+  horizonLine: {
+    position: "absolute",
+    top: HORIZON_Y,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: "#94a3b8",
+  },
+  horizonText: {
+    position: "absolute",
+    top: HORIZON_Y + 6,
+    alignSelf: "center",
+    color: "#cbd5e1",
+    fontSize: 12,
     fontWeight: "700",
   },
-  north: {
-    top: 10,
-    left: 165,
-  },
-  south: {
-    bottom: 10,
-    left: 165,
-  },
-  east: {
-    right: 12,
-    top: 160,
-  },
-  west: {
-    left: 12,
-    top: 160,
-  },
-  label: {
+  ground: {
     position: "absolute",
-    color: "#ffffff",
-    fontSize: 12,
-    fontWeight: "600",
+    top: HORIZON_Y + 1,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(15, 23, 42, 0.85)",
   },
   caption: {
     color: "#94a3b8",
     fontSize: 13,
     marginTop: 12,
+    textAlign: "center",
+    maxWidth: 320,
   },
 });

@@ -44,6 +44,12 @@
         {
           "locationWhenInUsePermission": "Lyra uses your location to show the planets and constellations visible from your position."
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Lyra uses your camera to overlay planets and constellations on the sky."
+        }
       ]
     ],
     "experiments": {

@@ -1,20 +1,37 @@
-import { calculateHeading, Magnetometer } from "@/services/sensors";
+import * as Location from "expo-location";
 import { useEffect, useState } from "react";
 
 export function useCompass() {
   const [heading, setHeading] = useState<number | null>(null);
+  const [accuracy, setAccuracy] = useState<number | null>(null);
 
   useEffect(() => {
-    Magnetometer.setUpdateInterval(250);
+    let subscription: Location.LocationSubscription | null = null;
 
-    const subscription = Magnetometer.addListener((data) => {
-      setHeading(calculateHeading(data));
-    });
+    async function startCompass() {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== "granted") {
+        return;
+      }
+
+      subscription = await Location.watchHeadingAsync((data) => {
+        const value =
+          data.trueHeading && data.trueHeading >= 0
+            ? data.trueHeading
+            : data.magHeading;
+
+        setHeading(Math.round(value));
+        setAccuracy(data.accuracy ?? null);
+      });
+    }
+
+    startCompass();
 
     return () => {
-      subscription.remove();
+      subscription?.remove();
     };
   }, []);
 
-  return { heading };
+  return { heading, accuracy };
 }
