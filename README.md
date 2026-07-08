@@ -2,7 +2,7 @@
 
 Lyra is a mobile stargazing application built with **React Native**, **Expo**, and **TypeScript** that calculates the real-time positions of the Sun, Moon, and visible planets based on the user's location and current time.
 
-The app combines live GPS data, device sensors, and astronomical calculations to create an interactive view of the sky while demonstrating mobile sensor integration, real-time calculations, and data visualization.
+The app combines live GPS data, device sensors, and astronomical calculations to create a rough interactive view of the sky while demonstrating mobile sensor integration, real-time calculations, and data visualization.
 
 ---
 
@@ -105,14 +105,6 @@ Lyra currently supports:
 
 ---
 
-# Experimental Features
-
-An experimental camera overlay has been implemented to explore augmented reality visualization.
-
-A production-quality AR stargazing experience requires advanced sensor fusion, camera calibration, and 3D coordinate projection. The current implementation serves as a proof of concept and foundation for future work.
-
----
-
 # Future Improvements
 
 - Major constellation rendering
@@ -178,13 +170,6 @@ Lyra requires the following permissions:
 
 - Location
 - Motion Sensors
-- Camera (Experimental AR mode)
-
----
-
-# Challenges
-
-One of the biggest challenges in this project was accurately visualizing celestial objects relative to the device's orientation. While calculating planetary positions using astronomical data is straightforward, creating a precise augmented reality experience requires accurate sensor fusion, camera calibration, and 3D coordinate transformations. Exploring these challenges provided valuable insight into how commercial stargazing applications approach real-time sky visualization.
 
 ---
 
