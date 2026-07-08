@@ -23,7 +23,10 @@ The app combines live GPS data, device sensors, and astronomical calculations to
 
 ## Screenshots
 
-*ADD SCREENSHOT*
+
+https://github.com/user-attachments/assets/3133bce3-9df2-4164-b2a0-688f76aa1da2
+
+
 ---
 
 # Tech Stack
