@@ -15,9 +15,8 @@ The app combines live GPS data, device sensors, and astronomical calculations to
 - Moon position calculations
 - Mercury, Venus, Mars, Jupiter, and Saturn visibility
 - Real-time astronomical calculations using the user's location
-- Interactive sky visualization
+- Interactive 2D sky visualization
 - Celestial position dashboard
-- Experimental AR prototype
 
 ---
 
@@ -73,7 +72,7 @@ https://github.com/user-attachments/assets/3133bce3-9df2-4164-b2a0-688f76aa1da2
       Sky Visualization Layer
                  │
                  ▼
-        Interactive Sky View
+        Interactive 2D Sky View
 ```
 
 ---
@@ -100,7 +99,7 @@ Lyra currently supports:
 - Real-time astronomical calculations
 - Device heading
 - Device orientation
-- Interactive sky visualization
+- 2D interactive sky visualization
 - Celestial object information
 
 ---
